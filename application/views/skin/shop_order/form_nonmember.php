@@ -1,0 +1,550 @@
+<?= css('/css/keyboard.css') ?>
+<?= js('/js/vkeyboard/keyboard.js') ?>
+<?= js('/js/vkeyboard/hangul.js') ?>
+<form action="/user/checkout_nonmember" method="post" id="f-shop-checkout" data-complete="/user/checkout_nonmember/complete-by-user">
+
+  <input type="hidden" name="billing_name" value="<?= $row && $row->billing_name ? $row->billing_name : ($this->auth->is_login() ? $this->auth->userinfo->name : '') ?>" />
+  <input type="hidden" name="billing_phone" value="<?= $row && $row->billing_phone ? $row->billing_phone : ($this->auth->is_login() ? $this->auth->userinfo->phone : '') ?>" />
+  <div class="container">
+    <div class="user-space-margin-top"></div>
+    <div class="page-title">
+      <div class="en-ko-lg title-">예약상품 결제</div>
+    </div>
+    <div class="dcore-cart" data-deletable="false">
+      <div class="dcore-cart-list"></div>
+    </div>
+    <hr class="transparent" />
+    <div class="relative">
+      <div class="dcore-order">
+        <div class="dcore-order-left">
+          <input type="hidden" name="merchant_uid" value="" />
+          <div class="form-sub-header">
+            <div class="title-">결제정보</div>
+            <button type="button" class="button bordered- shop_order_check pull-right" style="display: none">모달</button>
+          </div>
+          <div class="if inline- has-border-">
+            <label>구매자 정보</label>
+            <div class="data">
+              안전한 거래를 위해 본인인증이 필요합니다
+              <div class="user-cert">
+                <button type="button" class="button bordered- btn-large-m">본인 인증</button>
+                <input type="hidden" name="cert_phone" value="none" />
+
+              </div>
+              <div class="name"></div>
+              <div class="phone"></div>
+            </div>
+          </div>
+          <div class="if inline- has-border-">
+            <label>이메일 정보</label>
+            <div class="data" style="line-height: 34px;">
+              <input type="text" name="email" class="dform dform-text dform-installed" data-dform-required="false" value="<?= $row && $row->email ? $row->email : ($this->auth->is_login() ? $this->auth->userinfo->email : '') ?>">&nbsp;&nbsp;이메일 기입시 예약 정보등을 발송 해드립니다
+            </div>
+          </div>
+          <div class="if inline- has-border-">
+            <label>필수 조건</label>
+            <div class="data">
+              미성년자는 참여가 불가합니다.
+              <span class="help">(미성년자: 만 18세 이하)</span>
+            </div>
+          </div>
+          <div class="if inline- has-border-">
+            <label for="f-memo">요청사항</label>
+            <input type="text" name="memo" id="f-memo" class="dform" data-dform-required="false" data-dform-lang="<?= $_lang ?>" />
+          </div>
+          <div class="if inline- has-border-">
+            <label>할인 선택</label>
+            <div class="data limited-width-">
+              <div id="dc-types" data-apply-url="/user/checkout_nonmember/dc">
+                <? foreach ($model->available_dc_types as $k => $v) { ?>
+                  <div>
+                    <input type="radio" name="dc_type" id="f-dc_type_<?= $k ?>" value="<?= $k ?>" <?= $row && $row->dc_type == $k ? ' checked' : ($k == 'none' ? ' checked' : '') ?> />
+                    <label for="f-dc_type_<?= $k ?>"><?= $v ?></label>
+                  </div>
+                <? } ?>
+              </div>
+            </div>
+          </div>
+          <div class="if inline- has-border-">
+            <label>프로모션 코드</label>
+            <div class="data limited-width- no-padding-">
+
+
+              <!-- 원본소스 select : s -->
+              <!-- <select id="f-coupon_code" name="coupon_code" class="select2"
+                            placeholder="코드 입력"
+                            data-place-holder="코드를 입력해주세요."
+                            data-apply-url="/user/coupons/apply"
+                            data-cancel-url="/user/coupons/cancel"
+                            data-ajax-url="/user/coupons/json"
+                            data-tags="false"
+                            data-search="true"
+                            data-id="row.code"
+                            data-text="row.title + ' (' + row.discount + ' <?= $this->lang->line('coupon_discount') ?>)'"
+                        >
+                        <? if (!empty($row_coupon)) { ?>
+                            <option value="<?= $row_coupon->code ?>" selected><?= $row_coupon->title ?> (<?= $row_coupon->discount ?> <?= $this->lang->line('coupon_discount') ?>)</option>
+                        <? }
+                        ?>
+                        </select> -->
+              <!-- 원본소스 select : e -->
+
+              <!-- 대체소스 : s -->
+              <div class="dcore-checkout-coupon">
+                <!-- <div>코드입력</div> -->
+                <div id="keyboard_field_wrap">
+                  <!-- <input type="text" name="keyboardInput" id="keyboardInput" class="keyboardInput" placeholder="코드를 입력해주세요"> -->
+                  <div name="keyboarddiv" id="keyboarddiv" class="keyboarddiv">코드를 입력해주세요.</div>
+                  <div class="keyboardvalue" id="keyboardvalue">결과가 없습니다.</div>
+                </div>
+                <div>
+                  <!-- <? if (!empty($row_coupon)) { ?>
+                                    <input type="text" name="coupon_code" id="coupon_code" class="" value="<?= $row_coupon->code ?>">
+                                    <label for=""><?= $row_coupon->title ?> (<?= $row_coupon->discount ?> <?= $this->lang->line('coupon_discount') ?>)</label> -->
+                  <!-- <? } ?>  -->
+                </div>
+                <button type="button" class="button bordered- cancel hide" id='btn_cancel'><?= $this->lang->line('btn_cancel') ?></button>
+              </div>
+              <!-- 대체소스 : e -->
+
+
+            </div>
+          </div>
+          <div class="if inline- has-border-">
+            <label>결제방법</label>
+            <div class="data">
+              <? foreach ($model->available_payment_methods as $k => $v) { ?>
+                <div>
+                  <input type="radio" name="payment_method" id="f-payment_method_<?= $k ?>" value="<?= $k ?>" <?= $row && $row->payment_method == $k ? ' checked' : ($k == 'card' ? ' checked' : '') ?> />
+                  <label for="f-payment_method_<?= $k ?>"><?= $v ?></label>
+                </div>
+              <? } ?>
+            </div>
+          </div>
+          <div class="if inline- has-border-">
+            <label>약관 동의 및 <br />환불 정책</label>
+            <div class="data limited-width-">
+              <? include APPPATH . 'views/skin/shop_order/form/agree.php'; ?>
+            </div>
+          </div>
+        </div>
+        <div class="dcore-order-right dsticky">
+          <div class="form-sub-header">
+            <div class="title-">&nbsp;</div>
+          </div>
+          <? include APPPATH . 'views/skin/shop_order/form/submit.php'; ?>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+
+<script type="text/javascript">
+  $(function() {
+    // var input = $('#keyboardInput');
+    var keydiv = $('#keyboarddiv');
+    var discount = <?= $row->discount ?>;
+    var discountByType = <?= $row->discount_by_type ?>;
+    var totalPrice = <?= $total->price ?>;
+    var totalAmount = <?= $total->price - $row->discount - $row->discount_by_type - $total->discount_by_serial_stay ?>;
+    var dis_by_serial_stay = <?= $total->discount_by_serial_stay ?>;
+    var is_change_price = <?= $total->is_change_price ?>;
+    var daily_price_sum = <?= $total->daily_price_sum ?>;
+    var cart_uids = <?= json_encode($total->cart_uids) ?>;
+
+    check_in = '<?= $row_cart->check_in ?>';
+    check_out = '<?= $row_cart->check_out ?>';
+    product_module = '<?= $row_cart->product_module ?>';
+    time_schedule = '<?= $row_cart->time_schedule ?>';
+    input_value('');
+
+    function updateTotalAmount() {
+      totalAmount = totalPrice - discount - discountByType - dis_by_serial_stay;
+      if (totalAmount < 0)
+        totalAmount = 0;
+      var dcType = $('#dc-types input:checked').val();
+      var dcTypeTitle = '';
+      switch (dcType) {
+        case 'local':
+          dcTypeTitle = '제주도민 할인';
+          break;
+        case 'guest':
+          dcTypeTitle = '투숙객 할인';
+          break;
+        default:
+          dcTypeTitle = '할인';
+          break;
+      }
+      $('.dcore-discount-by-type-title').text(dcTypeTitle);
+      $('.dcore-cart-discount-value').text(discount).dformCurrency();
+      $('.dcore-cart-discount-by-type-value').text(discountByType).dformCurrency();
+      $('.dcore-cart-amount-value').text(totalAmount).dformCurrency();
+      $('.dcore-cart-discount-serial-stay-value').text(dis_by_serial_stay).dformCurrency();
+    }
+
+    function updateCartItems() {
+      $.get('/user/checkout_nonmember', {
+        t: moment().format('X')
+      }, function(data) {
+        var tmp = $('<div />').html(data);
+        var cartItems = tmp.find('.dcore-checkout-cart-items');
+        if (cartItems.length > 0) {
+          $('.dcore-checkout-cart-items').html(cartItems.html());
+        }
+      }, 'text');
+    }
+
+    function input_value(value) {
+      if (value) {
+        var url = '/user/coupons/apply';
+        $.post(url, {
+          code: value
+        }, function(data) {
+          if (data.error) {
+            $.dalert(data.error);
+            return;
+          }
+          updateTotal(data);
+          updateCartItems();
+        }, 'json');
+      } else {
+        var url = '/user/coupons/cancel';
+        $.post(url, function(data) {
+          console.log(data);
+          keydiv.html('코드를 입력해주세요.');
+          updateTotal(data);
+          updateCartItems();
+        }, 'json');
+      }
+      $(document).on('focus', '.select2-selection.select2-selection--single', function(e) {
+        // $(this).closest('.select2-container').siblings('select:enabled').select2('open');
+        // $('.select2-search__field').focus();
+        // VKI_buildKeyboardInputs();
+        $('.select2-search__field').trigger('click');
+      });
+
+      function updateTotal(data) {
+
+        if (data.discount) {
+          $('.dcore-cart-discount-value').text(data.discount);
+        }
+        if (data.discount) {
+          discount = parseFloat(data.discount.replace(/,/g, ''));
+          updateTotalAmount();
+        }
+      }
+    }
+
+    $('form#f-shop-checkout').each(function() {
+      var form = $(this);
+      var submit = form.find('button[type="submit"]');
+      <? if (in_array('vbank', array_keys($model->available_payment_methods))) { ?>
+        var vbankRefund = $('.dcore-checkout-vbank-refund');
+        var paymentMethods = form.find('[name="payment_method"]');
+
+        function showHideVbankRefund() {
+          if (paymentMethods.filter('[value="vbank"]').is(':checked')) {
+            vbankRefund.removeClass('hide');
+          } else {
+            vbankRefund.addClass('hide');
+            vbankRefund.find('.dform-error').each(function() {
+              var input = $(this);
+              input.val('').change().removeClass('valid');
+              $.each(input.data('dform-error-keyarray'), function(k, v) {
+                input.dformError(k, '');
+              });
+            });
+          }
+        }
+        showHideVbankRefund();
+        paymentMethods.change(showHideVbankRefund);
+      <? } ?>
+
+      <? if (!$this->auth->is_login()) { ?>
+        var passwd = form.find('[name="passwd"]').dform({
+          change: isPasswordMatch
+        });
+
+        var passwd_confirm = form.find('[name="passwd_confirm"]').dform({
+          change: isPasswordMatch
+        });
+
+        function isPasswordMatch(e, cb) {
+          if (passwd.val() != passwd_confirm.val()) {
+            passwd_confirm.dformError('confirm', '<?= $this->lang->line('auth_check_your_password') ?>');
+          } else {
+            passwd_confirm.dformError('confirm');
+            cb();
+          }
+        }
+      <? } ?>
+      form.find('#dc-types').each(function() {
+        var me = $(this);
+        var inputs = me.find('[name="dc_type"]');
+        inputs.change(function() {
+          $.post(me.attr('data-apply-url'), form.serialize(), function(data) {
+            if (data.error) {
+              $.dalert(data.error);
+              return;
+            }
+            if (data && data.total) {
+              discountByType = data.total.discount_by_type;
+              updateTotalAmount();
+              updateCartItems();
+            }
+          }, 'json');
+        });
+      });
+
+      form.find('.dcore-checkout-coupon').each(function() {
+        var me = $(this);
+        var button = me.find('button.cancel');
+        var select = me.find('select#f-coupon_code');
+        button.bind('hide-or-show', function() {
+          var option = select.find('option:selected');
+          if (option.length > 0 && option.attr('value')) {
+            button.removeClass('hide');
+          } else {
+            button.addClass('hide');
+          }
+        }).click(function() {
+          select.find('option').remove();
+          select.change();
+        });
+        button.trigger('hide-or-show');
+        select.change(function() {
+          button.trigger('hide-or-show');
+          var option = select.find('option:selected');
+          if (option.length > 0 && option.attr('value')) {
+            var url = select.attr('data-apply-url');
+            $.post(url, {
+              code: option.attr('value')
+            }, function(data) {
+              if (data.error) {
+                $.dalert(data.error);
+                return;
+              }
+              updateTotal(data);
+              updateCartItems();
+            }, 'json');
+          } else {
+            var url = select.attr('data-cancel-url');
+            $.post(url, function(data) {
+              updateTotal(data);
+              updateCartItems();
+            }, 'json');
+          }
+        });
+
+        $(document).on('focus', '.select2-selection.select2-selection--single', function(e) {
+          // $(this).closest('.select2-container').siblings('select:enabled').select2('open');
+          $('.select2-search__field').focus();
+        });
+
+        function updateTotal(data) {
+          if (data.discount) {
+            $('.dcore-cart-discount-value').text(data.discount);
+          }
+          if (data.discount) {
+            discount = parseFloat(data.discount.replace(/,/g, ''));
+            updateTotalAmount();
+          }
+        }
+      });
+
+      $("#btn_cancel").on("click", function() {
+        var button = $('.cancel');
+        //var input = $('#keyboardInput');
+        var div = $('#keyboardvalue');
+
+        //input.val('');
+        keydiv.html('');
+        div.removeClass("active");
+        div.html('결과가 없습니다.');
+        //var option = select.finddiv('option:selected');
+        button.addClass('hide');
+        input_value(keydiv.html());
+      });
+
+      $(".keyboardvalue").on("click", function() {
+        var button = $('.cancel');
+        var div = $('.keyboardvalue');
+        $('#keyboardInputClose').click();
+        text_arr = new Array();
+        //var option = select.finddiv('option:selected');
+        if (div.html() != '결과가 없습니다.') {
+          if (keydiv.html()) {
+            div.removeClass("active");
+            div.hide();
+            button.removeClass('hide');
+            input_value(keydiv.html());
+            keydiv.html(div.html());
+          }
+        }
+      });
+
+      form.dform({
+        submit: function() {
+          if ($('input[name=cert_phone]').val() != 'cert') {
+            $.dtoast('본인 인증을 해주세요.');
+            return false;
+          }
+          if ($('input[name=email]').val() == '') {
+            $.dtoast('이메일 주소를 입력 해 주세요.');
+            return false;
+          }
+          if (!$('#f-agree').is(':checked')) {
+            $.dtoast('<?= $this->lang->line('auth_you_must_agree_to_the_terms') ?>');
+            return false;
+          }
+          //var merchant_uid = '<?= $row->uid ?>_' + new Date().getTime();
+          var merchant_uid = '<?= $row->order_id ?>';
+          submit.prop('disabled', true);
+          form.find('[name="merchant_uid"]').val(merchant_uid);
+          $.post(form.attr('action'), form.serialize(), function(data) {
+            submit.prop('disabled', false);
+            if (data.error) {
+              $.dtoast('<span class="fa fa-frown-o"></span>&nbsp;&nbsp;' + data.error);
+            } else if (data.message) {
+              $.dtoast('<span class="fa fa-smile-o"></span>&nbsp;&nbsp;' + data.message);
+            } else if (data.redirect) {
+              if (totalAmount == 0) {
+                $.post(form.attr('data-complete'), {
+                  referer: 'dcore',
+                  imp_uid: '__FREE__',
+                  merchant_uid: merchant_uid
+                }, function(data) {
+                  if (data && data.error) {
+                    $.dalert(data.error);
+                    return;
+                  }
+                  submit.prop('disabled', false);
+                  $(document).trigger('hide-loading');
+                  $('.dcore-cart-count-outer').trigger('update-cart');
+                  $.dcoreSubmitResult(data);
+                }, 'json');
+                return;
+              }
+              IMP.init('<?= $this->config->item('imp_user_code') ?>');
+              IMP.request_pay({
+                pg: '<?= $this->config->item('imp_pg_provider') ?>',
+                pay_method: form.find('[name="payment_method"]:checked').val(),
+                merchant_uid: merchant_uid,
+                language: '<?= $_lang == 'korean' ? 'ko' : 'en' ?>',
+                m_redirect_url: '<?= http_host() ?>' + form.attr('data-complete'),
+                name: '<?
+                        $arr = array();
+                        foreach ($rows_cart as $row_cart) {
+                          $arr[] = preg_replace('/\'/', '\\\'', $row_cart->product_title);
+                        }
+                        echo strcut(implode(', ', $arr), 12, '...');
+                        ?>',
+                amount: totalAmount,
+                buyer_email: form.find('[name="email"]').val(),
+                buyer_name: form.find('[name="billing_name"]').val(),
+                buyer_tel: form.find('[name="billing_phone"]').val()
+              }, function(rsp) {
+                if (rsp.success) {
+                  function complete() {
+                    $.ajax({
+                      url: form.attr('data-complete'),
+                      type: 'POST',
+                      timeout: 20000,
+                      dataType: 'json',
+                      data: {
+                        referer: 'dcore',
+                        imp_uid: rsp.imp_uid,
+                        merchant_uid: rsp.merchant_uid
+                      },
+                      success: function(data, status, xhr) {
+                        submit.prop('disabled', false);
+                        $(document).trigger('hide-loading');
+                        if (data && data.error) {
+                          var data_split = data.error.split('@@');
+                          if (data_split.length > 1) {
+                            if (data_split[1] == 'MM') {
+                              $.dalert(data_split[0]);
+                              setTimeout(function() {
+                                location.href = "/user/cart";
+                              }, 3000);
+                              return;
+                            } else {
+                              if (data && data_split[0]) {
+                                $.dalert(data_split[0]);
+                                return;
+                              }
+                            }
+                          } else {
+                            if (data && data.error) {
+                              $.dalert(data.error);
+                              return;
+                            }
+                          }
+                        }
+                        $('.dcore-cart-count-outer').trigger('update-cart');
+                        $.dcoreSubmitResult(data);
+                      },
+                      error: function(xhr, status, error) {
+                        console.log(xhr);
+                        submit.prop('disabled', true);
+                        $.dtoast('결제는 완료되었으나 서버 부하량이 많아 처리를 완료하지 못했습니다.<br />재시도 중이오니 창을 닫지 마시고 기다려 주세요.');
+                        setTimeout(function() {
+                          complete();
+                        }, 3000);
+                      }
+                    });
+                  }
+                  submit.prop('disabled', true);
+                  $(document).trigger('show-loading');
+                  complete();
+                } else {
+                  $.dtoast(rsp.error_msg);
+                }
+              });
+            }
+          }, 'json');
+          return false;
+        }
+      });
+    });
+    // nonmember phone cert
+    $('.user-cert button').click(function(e) {
+      e.preventDefault();
+      var button = $(this);
+      IMP.init('<?= $this->config->item('imp_user_code') ?>');
+      IMP.certification({
+        merchant_uid: 'merchant_' + new Date().getTime() //본인인증과 연관된 가맹점 >내부 주문번호가 있다면 넘겨주세요
+      }, function(rsp) {
+        if (rsp.success) {
+          $('[name="imp_uid"]').val(rsp.imp_uid);
+          $('.user-cert .message').text('인증이 완료되었습니다.').show();
+          $.post('/user/cert_info', {
+            imp_uid: rsp.imp_uid
+          }, function(data) {
+            $('.name').html(data.name);
+            $('.phone').html(data.phone);
+            $('input[name=cert_phone]').val('cert');
+            $('input[name=billing_name]').val(data.name);
+            $('input[name=billing_phone]').val(data.phone);
+
+          }, 'json');
+        } else {
+          $.dalert(rsp.error_msg);
+        }
+      });
+    });
+  });
+</script>
+<? include APPPATH . 'views/skin/shop_cart/list/js.php'; ?>
+<? include APPPATH.'views/skin/shop_order/form/shop_order_check.php'; ?>
+
+<!-- Sojern Container Tag -->
+<script>
+  params.pt = "SHOPPING_CART",
+    params.hpid = "playce",
+    params.hd1 = "",
+    params.hd2 = "",
+    params.hcu = "",
+    params.hp = ""
+</script>
+<!-- End Sojern Tag -->
